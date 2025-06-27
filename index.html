@@ -14,6 +14,8 @@
                 <button id="help-btn" class="icon-btn" title="How to Play">?</button>
                 <button id="stats-btn" class="icon-btn" title="Statistics">📊</button>
                 <button id="settings-btn" class="icon-btn" title="Settings">⚙️</button>
+                <button id="hint-btn" class="icon-btn" title="Get Hint">💡</button>
+                <button id="restart-btn" class="icon-btn" title="Restart Game">🔄</button>
             </div>
         </header>
 
@@ -110,6 +112,18 @@
                     <label for="hard-mode">Hard Mode</label>
                     <input type="checkbox" id="hard-mode" class="toggle">
                     <p class="setting-description">Any revealed hints must be used in subsequent guesses</p>
+                </div>
+            </div>
+        </div>
+
+        <div id="restart-modal" class="modal hidden">
+            <div class="modal-content">
+                <span class="close">&times;</span>
+                <h2>Restart Game?</h2>
+                <p>Are you sure you want to restart? This will count as a loss in your statistics.</p>
+                <div class="modal-buttons">
+                    <button id="confirm-restart" class="modal-btn confirm">Yes, Restart</button>
+                    <button id="cancel-restart" class="modal-btn cancel">Cancel</button>
                 </div>
             </div>
         </div>
