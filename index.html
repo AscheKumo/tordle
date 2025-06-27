@@ -1,0 +1,121 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Wordle Clone</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>TORDLE</h1>
+            <div class="header-buttons">
+                <button id="help-btn" class="icon-btn" title="How to Play">?</button>
+                <button id="stats-btn" class="icon-btn" title="Statistics">📊</button>
+                <button id="settings-btn" class="icon-btn" title="Settings">⚙️</button>
+            </div>
+        </header>
+
+        <div id="game-container">
+            <div id="board"></div>
+            <div id="keyboard"></div>
+        </div>
+
+        <div id="message" class="message hidden"></div>
+
+        <!-- Modals -->
+        <div id="help-modal" class="modal hidden">
+            <div class="modal-content">
+                <span class="close">&times;</span>
+                <h2>How to Play</h2>
+                <p>Guess the WORDLE in 6 tries.</p>
+                <p>Each guess must be a valid 5-letter word. Hit the enter button to submit.</p>
+                <p>After each guess, the color of the tiles will change to show how close your guess was to the word.</p>
+                <div class="examples">
+                    <p><strong>Examples</strong></p>
+                    <div class="example">
+                        <div class="row">
+                            <div class="tile filled correct">W</div>
+                            <div class="tile filled">E</div>
+                            <div class="tile filled">A</div>
+                            <div class="tile filled">R</div>
+                            <div class="tile filled">Y</div>
+                        </div>
+                        <p>The letter <strong>W</strong> is in the word and in the correct spot.</p>
+                    </div>
+                    <div class="example">
+                        <div class="row">
+                            <div class="tile filled">P</div>
+                            <div class="tile filled present">I</div>
+                            <div class="tile filled">L</div>
+                            <div class="tile filled">L</div>
+                            <div class="tile filled">S</div>
+                        </div>
+                        <p>The letter <strong>I</strong> is in the word but in the wrong spot.</p>
+                    </div>
+                    <div class="example">
+                        <div class="row">
+                            <div class="tile filled">V</div>
+                            <div class="tile filled">A</div>
+                            <div class="tile filled">G</div>
+                            <div class="tile filled absent">U</div>
+                            <div class="tile filled">E</div>
+                        </div>
+                        <p>The letter <strong>U</strong> is not in the word in any spot.</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div id="stats-modal" class="modal hidden">
+            <div class="modal-content">
+                <span class="close">&times;</span>
+                <h2>Statistics</h2>
+                <div class="statistics">
+                    <div class="stat-container">
+                        <div class="stat">
+                            <div class="stat-number" id="total-played">0</div>
+                            <div class="stat-label">Played</div>
+                        </div>
+                        <div class="stat">
+                            <div class="stat-number" id="win-percentage">0</div>
+                            <div class="stat-label">Win %</div>
+                        </div>
+                        <div class="stat">
+                            <div class="stat-number" id="current-streak">0</div>
+                            <div class="stat-label">Current Streak</div>
+                        </div>
+                        <div class="stat">
+                            <div class="stat-number" id="max-streak">0</div>
+                            <div class="stat-label">Max Streak</div>
+                        </div>
+                    </div>
+                    <h3>Guess Distribution</h3>
+                    <div id="guess-distribution"></div>
+                </div>
+                <button id="share-btn" class="share-btn">Share</button>
+            </div>
+        </div>
+
+        <div id="settings-modal" class="modal hidden">
+            <div class="modal-content">
+                <span class="close">&times;</span>
+                <h2>Settings</h2>
+                <div class="setting">
+                    <label for="dark-mode">Dark Mode</label>
+                    <input type="checkbox" id="dark-mode" class="toggle">
+                </div>
+                <div class="setting">
+                    <label for="hard-mode">Hard Mode</label>
+                    <input type="checkbox" id="hard-mode" class="toggle">
+                    <p class="setting-description">Any revealed hints must be used in subsequent guesses</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="words.js"></script>
+    <script src="script.js"></script>
+</body>
+</html>
