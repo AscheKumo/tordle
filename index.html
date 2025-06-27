@@ -19,6 +19,8 @@
             </div>
         </header>
 
+        <div id="mode-indicator" class="mode-indicator hidden">FREEPLAY MODE</div>
+
         <div id="game-container">
             <div id="board"></div>
             <div id="keyboard"></div>
@@ -67,6 +69,7 @@
                         <p>The letter <strong>U</strong> is not in the word in any spot.</p>
                     </div>
                 </div>
+                <p><strong>After completing the daily puzzle, you can play unlimited games in Freeplay mode!</strong></p>
             </div>
         </div>
 
@@ -96,7 +99,10 @@
                     <h3>Guess Distribution</h3>
                     <div id="guess-distribution"></div>
                 </div>
-                <button id="share-btn" class="share-btn">Share</button>
+                <div class="modal-buttons">
+                    <button id="share-btn" class="share-btn">Share</button>
+                    <button id="freeplay-btn" class="freeplay-btn hidden">Play Freeplay</button>
+                </div>
             </div>
         </div>
 
@@ -120,10 +126,23 @@
             <div class="modal-content">
                 <span class="close">&times;</span>
                 <h2>Restart Game?</h2>
-                <p>Are you sure you want to restart? This will count as a loss in your statistics.</p>
+                <p id="restart-message">Are you sure you want to restart? This will count as a loss in your statistics.</p>
                 <div class="modal-buttons">
                     <button id="confirm-restart" class="modal-btn confirm">Yes, Restart</button>
                     <button id="cancel-restart" class="modal-btn cancel">Cancel</button>
+                </div>
+            </div>
+        </div>
+
+        <div id="freeplay-modal" class="modal hidden">
+            <div class="modal-content">
+                <span class="close">&times;</span>
+                <h2>Freeplay Mode</h2>
+                <p>Congratulations on completing today's puzzle! You can now play unlimited games in Freeplay mode.</p>
+                <p>Freeplay games don't affect your statistics.</p>
+                <div class="modal-buttons">
+                    <button id="start-freeplay" class="modal-btn confirm">Start Freeplay</button>
+                    <button id="cancel-freeplay" class="modal-btn cancel">Maybe Later</button>
                 </div>
             </div>
         </div>
