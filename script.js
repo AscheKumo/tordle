@@ -6,6 +6,8 @@ let currentWord = '';
 let targetWord = '';
 let hintsUsed = 0;
 let maxHints = 3;
+let isFreeplayMode = false;
+let dailyCompleted = false;
 let gameState = {
     board: Array(6).fill().map(() => Array(5).fill('')),
     evaluations: Array(6).fill().map(() => Array(5).fill('')),
@@ -38,6 +40,19 @@ function init() {
     loadState();
     selectNewWord();
     addEventListeners();
+    checkDailyCompletion();
+}
+
+// Check if daily puzzle is completed
+function checkDailyCompletion() {
+    const completedDates = JSON.parse(localStorage.getItem('wordleCompletedDates') || '[]');
+    const today = new Date().toDateString();
+    dailyCompleted = completedDates.includes(today);
+    
+    if (dailyCompleted) {
+        // Show freeplay button if daily is completed
+        document.getElementById('freeplay-btn').classList.remove('hidden');
+    }
 }
 
 // Create the game board
@@ -95,13 +110,45 @@ function createKeyboard() {
 
 // Select a new word for the day
 function selectNewWord() {
-    // Use date-based selection for daily word
+    if (isFreeplayMode) {
+        // Random word for freeplay
+        const randomIndex = Math.floor(Math.random() * WORDS.length);
+        targetWord = WORDS[randomIndex];
+        console.log('Freeplay word selected');
+        return;
+    }
+    
+    // Don't select a new word if we're loading a saved game from today
+    const savedState = localStorage.getItem('wordleGameState');
+    if (savedState) {
+        const state = JSON.parse(savedState);
+        if (state.date === new Date().toDateString() && state.targetWord && !state.isFreeplayMode) {
+            targetWord = state.targetWord;
+            return;
+        }
+    }
+    
+    // Use a better date-based selection that handles any date properly
     const today = new Date();
-    const startDate = new Date(2025, 0, 1); // January 1, 2025
-    const daysSinceStart = Math.floor((today - startDate) / (1000 * 60 * 60 * 24));
-    const wordIndex = daysSinceStart % WORDS.length;
+    const year = today.getFullYear();
+    const month = today.getMonth();
+    const day = today.getDate();
+    
+    // Create a pseudo-random number based on the date
+    // This ensures the same word for the entire day
+    const dateString = `${year}-${month}-${day}`;
+    let hash = 0;
+    for (let i = 0; i < dateString.length; i++) {
+        const char = dateString.charCodeAt(i);
+        hash = ((hash << 5) - hash) + char;
+        hash = hash & hash; // Convert to 32-bit integer
+    }
+    
+    // Make sure we get a positive index
+    const wordIndex = Math.abs(hash) % WORDS.length;
     targetWord = WORDS[wordIndex];
-    console.log('Target word selected'); // Don't log the actual word in production
+    
+    console.log('Daily word selected for', dateString); // Don't log the actual word in production
 }
 
 // Add event listeners
@@ -135,6 +182,12 @@ function addEventListeners() {
         if (isGameOver) {
             restartGame();
         } else {
+            const message = document.getElementById('restart-message');
+            if (isFreeplayMode) {
+                message.textContent = 'Are you sure you want to restart this freeplay game?';
+            } else {
+                message.textContent = 'Are you sure you want to restart? This will count as a loss in your statistics.';
+            }
             openModal('restart-modal');
         }
     });
@@ -142,11 +195,30 @@ function addEventListeners() {
     // Restart modal buttons
     document.getElementById('confirm-restart').addEventListener('click', () => {
         document.getElementById('restart-modal').classList.add('hidden');
-        restartGame(true);
+        restartGame(!isFreeplayMode);
     });
     
     document.getElementById('cancel-restart').addEventListener('click', () => {
         document.getElementById('restart-modal').classList.add('hidden');
+    });
+    
+    // Freeplay buttons
+    document.getElementById('freeplay-btn').addEventListener('click', () => {
+        document.getElementById('stats-modal').classList.add('hidden');
+        if (dailyCompleted) {
+            startFreeplay();
+        } else {
+            openModal('freeplay-modal');
+        }
+    });
+    
+    document.getElementById('start-freeplay').addEventListener('click', () => {
+        document.getElementById('freeplay-modal').classList.add('hidden');
+        startFreeplay();
+    });
+    
+    document.getElementById('cancel-freeplay').addEventListener('click', () => {
+        document.getElementById('freeplay-modal').classList.add('hidden');
     });
     
     // Close buttons
@@ -175,6 +247,14 @@ function addEventListeners() {
     
     // Share button
     document.getElementById('share-btn').addEventListener('click', shareResults);
+}
+
+// Start freeplay mode
+function startFreeplay() {
+    isFreeplayMode = true;
+    document.getElementById('mode-indicator').classList.remove('hidden');
+    restartGame(false);
+    showMessage('Freeplay mode started!');
 }
 
 // Handle key press
@@ -297,7 +377,16 @@ function restartGame(countAsLoss = false) {
         key.className = key.classList.contains('wide') ? 'key wide' : 'key';
     });
     
+    // Force a new word selection by clearing the saved date
+    const savedState = localStorage.getItem('wordleGameState');
+    if (savedState) {
+        const state = JSON.parse(savedState);
+        state.date = ''; // Clear the date to force new word selection
+        localStorage.setItem('wordleGameState', JSON.stringify(state));
+    }
+    
     // Select new word
+    targetWord = ''; // Clear the current word
     selectNewWord();
     
     // Save state
@@ -365,16 +454,42 @@ function submitGuess() {
             isGameOver = true;
             gameState.gameStatus = 'WIN';
             statistics.lastCompletedRow = currentRow;
-            updateStatistics(true);
-            showMessage(['Genius', 'Magnificent', 'Impressive', 'Splendid', 'Great', 'Phew'][currentRow]);
+            
+            if (!isFreeplayMode) {
+                updateStatistics(true);
+                // Mark daily as completed
+                const completedDates = JSON.parse(localStorage.getItem('wordleCompletedDates') || '[]');
+                const today = new Date().toDateString();
+                if (!completedDates.includes(today)) {
+                    completedDates.push(today);
+                    localStorage.setItem('wordleCompletedDates', JSON.stringify(completedDates));
+                }
+                dailyCompleted = true;
+                document.getElementById('freeplay-btn').classList.remove('hidden');
+            }
+            
+            const messages = isFreeplayMode ? 
+                ['Nice!', 'Well done!', 'Great job!', 'Excellent!', 'Superb!', 'Fantastic!'] :
+                ['Genius', 'Magnificent', 'Impressive', 'Splendid', 'Great', 'Phew'];
+            showMessage(messages[currentRow]);
+            
             setTimeout(() => {
                 updateStatisticsDisplay();
                 openModal('stats-modal');
+                if (!isFreeplayMode && dailyCompleted) {
+                    setTimeout(() => {
+                        openModal('freeplay-modal');
+                    }, 500);
+                }
             }, 2000);
         } else if (currentRow === 5) {
             isGameOver = true;
             gameState.gameStatus = 'LOSE';
-            updateStatistics(false);
+            
+            if (!isFreeplayMode) {
+                updateStatistics(false);
+            }
+            
             showMessage(targetWord);
             setTimeout(() => {
                 updateStatisticsDisplay();
@@ -518,7 +633,7 @@ function updateStatisticsDisplay() {
         
         const bar = document.createElement('div');
         bar.className = 'guess-bar';
-        if (i === statistics.lastCompletedRow) {
+        if (i === statistics.lastCompletedRow && !isFreeplayMode) {
             bar.classList.add('highlight');
         }
         bar.style.width = `${(statistics.guessDistribution[i] / maxGuesses) * 100}%`;
@@ -532,6 +647,11 @@ function updateStatisticsDisplay() {
 
 // Share results
 function shareResults() {
+    if (isFreeplayMode) {
+        showMessage("Can't share freeplay results");
+        return;
+    }
+    
     const emojiGrid = gameState.evaluations
         .filter(row => row.some(cell => cell !== ''))
         .map(row => 
@@ -564,6 +684,7 @@ function saveState() {
         targetWord,
         settings,
         hintsUsed,
+        isFreeplayMode,
         date: new Date().toDateString()
     };
     localStorage.setItem('wordleGameState', JSON.stringify(state));
@@ -592,19 +713,30 @@ function loadState() {
     if (savedState) {
         const state = JSON.parse(savedState);
         
-        // Check if it's a new day
-        if (state.date !== new Date().toDateString()) {
+        // Check if it's a new day and we're not in freeplay
+        if (state.date !== new Date().toDateString() && !state.isFreeplayMode) {
             return; // Start fresh
         }
         
         // Restore state
-        gameState = state.gameState;
+        gameState = state.gameState || gameState;
         currentRow = state.currentRow;
         currentTile = state.currentTile;
         currentWord = state.currentWord;
         isGameOver = state.isGameOver;
         targetWord = state.targetWord;
         hintsUsed = state.hintsUsed || 0;
+        isFreeplayMode = state.isFreeplayMode || false;
+        
+        // Show freeplay indicator if needed
+        if (isFreeplayMode) {
+            document.getElementById('mode-indicator').classList.remove('hidden');
+        }
+        
+        // Initialize hintPositions if it doesn't exist
+        if (!gameState.hintPositions) {
+            gameState.hintPositions = [];
+        }
         
         // Restore board
         for (let row = 0; row < 6; row++) {
