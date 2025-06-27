@@ -1,0 +1,477 @@
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+:root {
+    --background: #ffffff;
+    --text-primary: #1a1a1b;
+    --text-secondary: #787c7e;
+    --border: #d3d6da;
+    --key-bg: #d3d6da;
+    --key-text: #1a1a1b;
+    --correct: #6aaa64;
+    --present: #c9b458;
+    --absent: #787c7e;
+    --tile-border: #d3d6da;
+    --modal-bg: #ffffff;
+}
+
+body {
+    font-family: 'Clear Sans', 'Helvetica Neue', Arial, sans-serif;
+    background-color: var(--background);
+    color: var(--text-primary);
+    height: 100vh;
+    display: flex;
+    flex-direction: column;
+    transition: background-color 0.3s ease;
+}
+
+body.dark-mode {
+    --background: #121213;
+    --text-primary: #ffffff;
+    --text-secondary: #818384;
+    --border: #3a3a3c;
+    --key-bg: #818384;
+    --key-text: #ffffff;
+    --tile-border: #3a3a3c;
+    --modal-bg: #1a1a1b;
+}
+
+.container {
+    max-width: 500px;
+    margin: 0 auto;
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+    padding: 0 16px;
+}
+
+header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    height: 50px;
+    border-bottom: 1px solid var(--border);
+    margin-bottom: 10px;
+}
+
+h1 {
+    font-size: 36px;
+    font-weight: 700;
+    letter-spacing: 0.2rem;
+    text-transform: uppercase;
+}
+
+.header-buttons {
+    display: flex;
+    gap: 8px;
+}
+
+.icon-btn {
+    background: none;
+    border: none;
+    cursor: pointer;
+    font-size: 20px;
+    color: var(--text-primary);
+    padding: 8px;
+    border-radius: 4px;
+    transition: background-color 0.2s;
+}
+
+.icon-btn:hover {
+    background-color: var(--key-bg);
+}
+
+#game-container {
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    align-items: center;
+    flex-grow: 1;
+    max-height: calc(100vh - 100px);
+}
+
+#board {
+    display: grid;
+    grid-template-rows: repeat(6, 1fr);
+    grid-gap: 5px;
+    padding: 10px;
+    box-sizing: border-box;
+    flex-grow: 1;
+    max-width: 350px;
+    max-height: 420px;
+    width: 100%;
+}
+
+.row {
+    display: grid;
+    grid-template-columns: repeat(5, 1fr);
+    grid-gap: 5px;
+}
+
+.tile {
+    width: 100%;
+    aspect-ratio: 1;
+    font-size: 2rem;
+    font-weight: bold;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    text-transform: uppercase;
+    user-select: none;
+    border: 2px solid var(--tile-border);
+    transition: all 0.2s ease;
+}
+
+.tile.filled {
+    animation: bounce 0.2s ease-in-out;
+    border-color: var(--text-secondary);
+}
+
+.tile.reveal {
+    animation: flip 0.6s ease;
+}
+
+.tile.correct {
+    background-color: var(--correct);
+    border-color: var(--correct);
+    color: white;
+}
+
+.tile.present {
+    background-color: var(--present);
+    border-color: var(--present);
+    color: white;
+}
+
+.tile.absent {
+    background-color: var(--absent);
+    border-color: var(--absent);
+    color: white;
+}
+
+.tile.shake {
+    animation: shake 0.5s ease-in-out;
+}
+
+@keyframes bounce {
+    0%, 100% {
+        transform: scale(1);
+    }
+    50% {
+        transform: scale(1.1);
+    }
+}
+
+@keyframes flip {
+    0% {
+        transform: rotateX(0);
+    }
+    50% {
+        transform: rotateX(90deg);
+    }
+    100% {
+        transform: rotateX(0);
+    }
+}
+
+@keyframes shake {
+    0%, 100% {
+        transform: translateX(0);
+    }
+    10%, 30%, 50%, 70%, 90% {
+        transform: translateX(-2px);
+    }
+    20%, 40%, 60%, 80% {
+        transform: translateX(2px);
+    }
+}
+
+#keyboard {
+    margin: 0 8px;
+    user-select: none;
+    margin-bottom: 10px;
+}
+
+.keyboard-row {
+    display: flex;
+    width: 100%;
+    margin: 0 auto 8px;
+    touch-action: manipulation;
+}
+
+.keyboard-row:nth-child(2) {
+    margin-left: 15px;
+}
+
+.key {
+    font-weight: bold;
+    border: 0;
+    padding: 0;
+    margin-right: 6px;
+    height: 58px;
+    border-radius: 4px;
+    cursor: pointer;
+    user-select: none;
+    background-color: var(--key-bg);
+    color: var(--key-text);
+    flex: 1;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    text-transform: uppercase;
+    transition: all 0.2s;
+}
+
+.key.wide {
+    flex: 1.5;
+}
+
+.key:hover {
+    transform: scale(1.1);
+}
+
+.key.correct {
+    background-color: var(--correct);
+    color: white;
+}
+
+.key.present {
+    background-color: var(--present);
+    color: white;
+}
+
+.key.absent {
+    background-color: var(--absent);
+    color: white;
+}
+
+.message {
+    position: absolute;
+    top: 10%;
+    left: 50%;
+    transform: translateX(-50%);
+    background-color: var(--text-primary);
+    color: var(--background);
+    padding: 16px 24px;
+    border-radius: 4px;
+    font-weight: bold;
+    z-index: 1000;
+    animation: slideDown 0.3s ease;
+}
+
+.message.hidden {
+    display: none;
+}
+
+@keyframes slideDown {
+    from {
+        transform: translateX(-50%) translateY(-100px);
+        opacity: 0;
+    }
+    to {
+        transform: translateX(-50%) translateY(0);
+        opacity: 1;
+    }
+}
+
+/* Modal Styles */
+.modal {
+    display: none;
+    position: fixed;
+    z-index: 2000;
+    left: 0;
+    top: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0, 0, 0, 0.5);
+}
+
+.modal.hidden {
+    display: none;
+}
+
+.modal:not(.hidden) {
+    display: block;
+}
+
+.modal-content {
+    background-color: var(--modal-bg);
+    margin: 10% auto;
+    padding: 20px;
+    border-radius: 8px;
+    width: 90%;
+    max-width: 500px;
+    position: relative;
+    max-height: 80vh;
+    overflow-y: auto;
+}
+
+.close {
+    color: var(--text-secondary);
+    position: absolute;
+    top: 10px;
+    right: 15px;
+    font-size: 28px;
+    font-weight: bold;
+    cursor: pointer;
+}
+
+.close:hover {
+    color: var(--text-primary);
+}
+
+.examples {
+    margin-top: 20px;
+}
+
+.example {
+    margin: 20px 0;
+}
+
+.example .row {
+    display: flex;
+    gap: 5px;
+    margin-bottom: 10px;
+    justify-content: flex-start;
+}
+
+.example .tile {
+    width: 40px;
+    height: 40px;
+    font-size: 1.2rem;
+}
+
+/* Statistics */
+.statistics {
+    text-align: center;
+}
+
+.stat-container {
+    display: flex;
+    justify-content: space-around;
+    margin: 20px 0;
+}
+
+.stat {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+}
+
+.stat-number {
+    font-size: 36px;
+    font-weight: bold;
+}
+
+.stat-label {
+    font-size: 12px;
+    color: var(--text-secondary);
+}
+
+#guess-distribution {
+    margin: 20px 0;
+}
+
+.guess-distribution-row {
+    display: flex;
+    align-items: center;
+    margin: 5px 0;
+    height: 20px;
+}
+
+.guess-number {
+    width: 20px;
+    text-align: right;
+    margin-right: 10px;
+}
+
+.guess-bar {
+    background-color: var(--text-secondary);
+    color: white;
+    text-align: right;
+    padding: 0 10px;
+    min-width: 20px;
+    font-weight: bold;
+    font-size: 14px;
+}
+
+.guess-bar.highlight {
+    background-color: var(--correct);
+}
+
+.share-btn {
+    background-color: var(--correct);
+    color: white;
+    border: none;
+    padding: 12px 24px;
+    border-radius: 4px;
+    font-weight: bold;
+    cursor: pointer;
+    margin-top: 20px;
+}
+
+.share-btn:hover {
+    opacity: 0.9;
+}
+
+/* Settings */
+.setting {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 16px 0;
+    border-bottom: 1px solid var(--border);
+}
+
+.setting-description {
+    font-size: 12px;
+    color: var(--text-secondary);
+    margin-top: 8px;
+}
+
+.toggle {
+    position: relative;
+    width: 50px;
+    height: 25px;
+    -webkit-appearance: none;
+    background-color: var(--text-secondary);
+    border-radius: 25px;
+    outline: none;
+    cursor: pointer;
+    transition: background-color 0.3s;
+}
+
+.toggle:checked {
+    background-color: var(--correct);
+}
+
+.toggle:before {
+    content: '';
+    position: absolute;
+    width: 20px;
+    height: 20px;
+    border-radius: 50%;
+    top: 2.5px;
+    left: 2.5px;
+    background-color: white;
+    transition: transform 0.3s;
+}
+
+.toggle:checked:before {
+    transform: translateX(25px);
+}
+
+@media (max-width: 500px) {
+    .tile {
+        font-size: 1.5rem;
+    }
+    
+    .key {
+        height: 50px;
+        font-size: 13px;
+        margin-right: 4px;
+    }
+}
