@@ -4,11 +4,15 @@ let currentTile = 0;
 let isGameOver = false;
 let currentWord = '';
 let targetWord = '';
+let hintsUsed = 0;
+let maxHints = 3;
 let gameState = {
     board: Array(6).fill().map(() => Array(5).fill('')),
     evaluations: Array(6).fill().map(() => Array(5).fill('')),
     currentRow: 0,
-    gameStatus: 'IN_PROGRESS' // IN_PROGRESS, WIN, LOSE
+    gameStatus: 'IN_PROGRESS', // IN_PROGRESS, WIN, LOSE
+    hintsUsed: 0,
+    hintPositions: []
 };
 
 // Statistics
@@ -123,6 +127,28 @@ function addEventListeners() {
     });
     document.getElementById('settings-btn').addEventListener('click', () => openModal('settings-modal'));
     
+    // Hint button
+    document.getElementById('hint-btn').addEventListener('click', useHint);
+    
+    // Restart button
+    document.getElementById('restart-btn').addEventListener('click', () => {
+        if (isGameOver) {
+            restartGame();
+        } else {
+            openModal('restart-modal');
+        }
+    });
+    
+    // Restart modal buttons
+    document.getElementById('confirm-restart').addEventListener('click', () => {
+        document.getElementById('restart-modal').classList.add('hidden');
+        restartGame(true);
+    });
+    
+    document.getElementById('cancel-restart').addEventListener('click', () => {
+        document.getElementById('restart-modal').classList.add('hidden');
+    });
+    
     // Close buttons
     document.querySelectorAll('.close').forEach(closeBtn => {
         closeBtn.addEventListener('click', function() {
@@ -176,8 +202,128 @@ function handleKeyPress(key) {
     }
 }
 
+// Use hint function
+function useHint() {
+    if (isGameOver) {
+        showMessage('Game is over!');
+        return;
+    }
+    
+    if (hintsUsed >= maxHints) {
+        showMessage('No more hints available!');
+        return;
+    }
+    
+    // Find positions that haven't been revealed yet
+    const availablePositions = [];
+    for (let i = 0; i < 5; i++) {
+        if (!gameState.hintPositions.includes(i)) {
+            let positionRevealed = false;
+            for (let row = 0; row < currentRow; row++) {
+                if (gameState.evaluations[row][i] === 'correct') {
+                    positionRevealed = true;
+                    break;
+                }
+            }
+            if (!positionRevealed) {
+                availablePositions.push(i);
+            }
+        }
+    }
+    
+    if (availablePositions.length === 0) {
+        showMessage('All letters already revealed!');
+        return;
+    }
+    
+    // Choose a random position to reveal
+    const randomIndex = Math.floor(Math.random() * availablePositions.length);
+    const positionToReveal = availablePositions[randomIndex];
+    
+    // Reveal the letter in the current row
+    const tile = document.getElementById(`tile-${currentRow}-${positionToReveal}`);
+    tile.textContent = targetWord[positionToReveal];
+    tile.classList.add('filled', 'hint');
+    
+    // Update current word
+    const wordArray = currentWord.padEnd(5, ' ').split('');
+    wordArray[positionToReveal] = targetWord[positionToReveal];
+    currentWord = wordArray.join('').trim();
+    
+    // Update tile position
+    currentTile = Math.max(currentTile, positionToReveal + 1);
+    
+    // Mark this position as hinted
+    gameState.hintPositions.push(positionToReveal);
+    hintsUsed++;
+    gameState.hintsUsed = hintsUsed;
+    
+    showMessage(`Hint ${hintsUsed}/${maxHints} used`);
+    saveState();
+}
+
+// Restart game
+function restartGame(countAsLoss = false) {
+    if (countAsLoss && !isGameOver) {
+        updateStatistics(false);
+    }
+    
+    // Reset game state
+    currentRow = 0;
+    currentTile = 0;
+    isGameOver = false;
+    currentWord = '';
+    hintsUsed = 0;
+    gameState = {
+        board: Array(6).fill().map(() => Array(5).fill('')),
+        evaluations: Array(6).fill().map(() => Array(5).fill('')),
+        currentRow: 0,
+        gameStatus: 'IN_PROGRESS',
+        hintsUsed: 0,
+        hintPositions: []
+    };
+    
+    // Clear board
+    for (let i = 0; i < 6; i++) {
+        for (let j = 0; j < 5; j++) {
+            const tile = document.getElementById(`tile-${i}-${j}`);
+            tile.textContent = '';
+            tile.className = 'tile';
+        }
+    }
+    
+    // Reset keyboard
+    document.querySelectorAll('.key').forEach(key => {
+        key.className = key.classList.contains('wide') ? 'key wide' : 'key';
+    });
+    
+    // Select new word
+    selectNewWord();
+    
+    // Save state
+    saveState();
+    
+    showMessage('New game started!');
+}
+
 // Submit the current guess
 function submitGuess() {
+    // Fill in any missing letters with the hint letters if they exist
+    if (currentTile < 5) {
+        for (let i = currentTile; i < 5; i++) {
+            const tile = document.getElementById(`tile-${currentRow}-${i}`);
+            if (tile.textContent) {
+                currentWord += tile.textContent;
+            }
+        }
+    }
+    
+    if (currentWord.length !== 5) {
+        shakeRow();
+        showMessage('Not enough letters');
+        return;
+    }
+    
     if (!VALID_WORDS.includes(currentWord) && !WORDS.includes(currentWord)) {
         shakeRow();
         showMessage('Not in word list');
@@ -196,6 +342,7 @@ function submitGuess() {
     for (let i = 0; i < 5; i++) {
         setTimeout(() => {
             const tile = document.getElementById(`tile-${currentRow}-${i}`);
+            tile.classList.remove('hint'); // Remove hint class if it was there
             tile.classList.add('reveal', evaluation[i]);
             
             // Update keyboard
@@ -395,7 +542,8 @@ function shareResults() {
             }).join('')
         ).join('\n');
     
-    const text = `Wordle ${gameState.gameStatus === 'WIN' ? currentRow + 1 : 'X'}/6\n\n${emojiGrid}`;
+    const hintsText = hintsUsed > 0 ? ` (${hintsUsed} hints)` : '';
+    const text = `Wordle ${gameState.gameStatus === 'WIN' ? currentRow + 1 : 'X'}/6${hintsText}\n\n${emojiGrid}`;
     
     if (navigator.share) {
         navigator.share({ text });
@@ -415,6 +563,7 @@ function saveState() {
         isGameOver,
         targetWord,
         settings,
+        hintsUsed,
         date: new Date().toDateString()
     };
     localStorage.setItem('wordleGameState', JSON.stringify(state));
@@ -455,6 +604,7 @@ function loadState() {
         currentWord = state.currentWord;
         isGameOver = state.isGameOver;
         targetWord = state.targetWord;
+        hintsUsed = state.hintsUsed || 0;
         
         // Restore board
         for (let row = 0; row < 6; row++) {
@@ -478,6 +628,16 @@ function loadState() {
                     }
                 }
             }
+        }
+        
+        // Restore hints
+        if (gameState.hintPositions) {
+            gameState.hintPositions.forEach(pos => {
+                const tile = document.getElementById(`tile-${currentRow}-${pos}`);
+                if (tile && tile.textContent && !tile.classList.contains('reveal')) {
+                    tile.classList.add('hint');
+                }
+            });
         }
         
         // Show win/lose message if game is over
